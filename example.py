@@ -1,15 +1,15 @@
 import ROOT
-import bGrid
-import bCurrent
+import core.bGrid
+import core.bCurrent
 import math
 
 """ Defined a grid with a certain size, only a square grid is defined
     with a length and a number of cells in that grid """
-Grid = bGrid.bGrid2D(10.0,10000)
+Grid = core.bGrid.bGrid2D(10.0,10000)
 
 """ Example of a current point which contributes to the B field
     (x,y,z,bx,by,bz) """
-point = bCurrent.currentPoint(  5.0, 5.0, 0.0,
+point = core.bCurrent.currentPoint(  5.0, 5.0, 0.0,
                                 0.0, 1.0, 0.0)
 
 """ Add the current point to the grid object. This is essentially
