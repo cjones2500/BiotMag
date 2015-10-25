@@ -108,6 +108,38 @@ class bGrid2D(bGrid):
         canvas.SaveAs(saveFileName)
         canvas.Update()
         raw_input("\nPress Enter to continue...")
+        
+    def PlotXProjection(self,yLineValue,saveFileName,yBandWidth=0.1):
+        canvas = ROOT.TCanvas("canvas","Projection on X (set Y)",200,10,700,500);
+        counter = 0
+        
+        """Find out how many values are within a Y band width"""
+        for iCell in range(0,self.numberOfCells):
+            if( (self.cellsInGrid[iCell][1] + yBandWidth > yLineValue) and (self.cellsInGrid[iCell][1] - yBandWidth < yLineValue)  ):
+                counter = counter + 1
+        
+        bList = np.zeros(counter)
+        xList = np.zeros(counter)
+    
+        counter = 0
+        for iCell in range(0,self.numberOfCells):
+            if( (self.cellsInGrid[iCell][1] + yBandWidth > yLineValue) and (self.cellsInGrid[iCell][1] - yBandWidth < yLineValue)  ):
+                xList[counter] = self.cellsInGrid[iCell][0]
+                bList[counter] = m.sqrt(    self.cellsInGrid[iCell][3]*self.cellsInGrid[iCell][3] +
+                                            self.cellsInGrid[iCell][4]*self.cellsInGrid[iCell][4] +
+                                            self.cellsInGrid[iCell][5]*self.cellsInGrid[iCell][5]   )
+                counter = counter + 1
+        
+        gr = ROOT.TGraph(len(xList),xList,bList)
+        gr.SetTitle("Projection of X on the line Y = " + str(yLineValue))
+        gr.GetXaxis().SetTitle("X position [cm]")
+        gr.GetYaxis().SetTitle("B field Strength [T]")
+        gr.GetXaxis().CenterTitle()
+        gr.GetYaxis().CenterTitle()
+        gr.Draw("AC")
+        canvas.SaveAs(saveFileName)
+        canvas.Update()
+        raw_input("\nPress Enter to continue...")
 
         
 

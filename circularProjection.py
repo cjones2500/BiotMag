@@ -14,7 +14,13 @@ Grid = core.bGrid.bGrid2D(10.0,10000)
 
 """Center of a 10x10 Grid"""
 centerPoint = ROOT.TVector3(5.0,5.0,0.0)
-radius = 2.5
-circle = core.bCurrent.currentCoil(centerPoint,radius,fct.constantCurrent,10)
-Grid.addEffectiveBField(circle.currentElements)
-Grid.Plot2D("circleExample.root")
+radiusMin = 2.0
+thicknessOfWire = 0.01
+iMax = 5
+for i in range(0,iMax):
+    radius = radiusMin + thicknessOfWire*(1.0*i)/(iMax*1.0)
+    circle = core.bCurrent.currentCoil(centerPoint,radius,fct.constantCurrent,100)
+    Grid.addEffectiveBField(circle.currentElements)
+
+Grid.Plot2D("circleProjection.root")
+Grid.PlotXProjection(centerPoint.X(),"xProjection.root")
