@@ -55,14 +55,15 @@ class bGrid(object):
                 """Calculate the cross product for biot-savart function"""
                 crossProductUnitVector = currentElementUnitDirection.Cross(distanceVector.Unit())
                 
+                radialDistanceInCm = distanceVector.Mag()*0.01
                 """ Calculate the size of the field at Point P from a
                     specific current point source. Since point sources
                     are being used a truncation is given when the center
                     of the cell is close to the current source"""
-                if(distanceVector.Mag() < self.truncation):
+                if(radialDistanceInCm < self.truncation):
                     multiplicationFactor = float(currentElementVector.Mag()*crossProductUnitVector.Mag()/(self.truncation*self.truncation))
                 else:
-                    multiplicationFactor = float(currentElementVector.Mag()*crossProductUnitVector.Mag()/(distanceVector.Mag()*distanceVector.Mag()))
+                    multiplicationFactor = float(currentElementVector.Mag()*crossProductUnitVector.Mag()/(radialDistanceInCm*radialDistanceInCm))
     
                 """Calculate the total effect of different all the current sources on a particular cell"""
                 vectorSumOfBFields = vectorSumOfBFields + 0.0000001*crossProductUnitVector*multiplicationFactor
@@ -75,7 +76,7 @@ class bGrid(object):
 """This is a class to build a 2D grid object and has 2X2 dimensions"""
 class bGrid2D(bGrid):
     
-    def __init__(self,length,numberOfCells,truncation=0.00001):
+    def __init__(self,length,numberOfCells,truncation=0.000001):
         bGrid.__init__(self,length,numberOfCells,truncation)
         self.dimensions = 2
         self.numberInLength  = int(m.pow(self.numberOfCells,(1.0/float(self.dimensions))))
