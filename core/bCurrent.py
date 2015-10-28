@@ -8,8 +8,9 @@ import ROOT
 class currentObj(object):
     
     """Initialize the current object"""
-    def __init__(self,numberOfElements):
+    def __init__(self,numberOfElements,sizeOfCurrent):
         self.numberOfElements = int(numberOfElements)
+        self.sizeOfCurrent = sizeOfCurrent
         
         """ Initialize a numpy array with a sufficient description
             for the current source object where the different
@@ -24,13 +25,17 @@ class currentObj(object):
 class currentPoint(currentObj):
     
     def __init__(self, x, y, z, ix, iy, iz, numberOfElements=1.0):
-        currentObj.__init__(self,numberOfElements)
+        currentObj.__init__(self,numberOfElements,sizeOfCurrent=1.0)
         self.x = x
         self.y = y
-        self.z = z 
+        self.z = z
+    
         self.ix = ix
         self.iy = iy
         self.iz = iz
+        
+        """Override the size of the current """
+        self.sizeOfCurrent = m.sqrt(self.ix*self.ix + self.iy*self.iy + self.iz*self.iz)
         
         self.currentElements[0][0] = self.x
         self.currentElements[0][1] = self.y
@@ -44,8 +49,8 @@ class currentPoint(currentObj):
 class currentLine(currentObj):
     """ Initialized by defining two points to draw the line and a currentVectorFunction() is
         also provided to generate the current vector at a given point """
-    def __init__(self,pointA,pointB,currentVectorFunction,numberOfElements):
-        currentObj.__init__(self,numberOfElements)
+    def __init__(self,pointA,pointB,currentVectorFunction,numberOfElements,sizeOfCurrent=1.0):
+        currentObj.__init__(self,numberOfElements,sizeOfCurrent)
         self.numberOfElements = int(numberOfElements)
         
         """Check that a TVector3 has been given to this class """
@@ -72,7 +77,7 @@ class currentLine(currentObj):
                                             widthInZ)
             
             """Update to reflect the current direction and size at a given point """
-            iCurrentVector = currentVectorFunction(iCurrentVector)
+            iCurrentVector = currentVectorFunction(iCurrentVector)*self.sizeOfCurrent
             
             """Calculate the current Vector at each point from the current vector function """
             self.currentElements[iPoint][3] = iCurrentVector.X()          
@@ -81,8 +86,8 @@ class currentLine(currentObj):
                 
 """Class to define a circle of current that represents a coil """
 class currentCoil(currentObj):
-    def __init__(self,centerPoint,radius,currentVectorFunction,numberOfElements):
-        currentObj.__init__(self,numberOfElements)
+    def __init__(self,centerPoint,radius,currentVectorFunction,numberOfElements,sizeOfCurrent=1.0):
+        currentObj.__init__(self,numberOfElements,sizeOfCurrent)
         self.numberOfElements = int(numberOfElements)
         
         """Check that a TVector3 has been given to this class """
@@ -90,7 +95,7 @@ class currentCoil(currentObj):
             raise TypeError("Points on the line must be a TVector3")
         
         segmentDivision =  (2.0*m.pi)/self.numberOfElements
-        for iPoint in range(0,self.numberOfElements):
+        for iPoint in xrange(0,self.numberOfElements):
             theta = segmentDivision*iPoint*1.0
             self.currentElements[iPoint][0] = centerPoint.X() + radius*m.cos(theta) 
             self.currentElements[iPoint][1] = centerPoint.Y() + radius*m.sin(theta)
@@ -103,10 +108,15 @@ class currentCoil(currentObj):
                                             centerPoint.Z())
             
             """Always choose the vector the is orthogonal to the direction from the center of the coil"""
-            iCurrentVector = iCurrentVector.Orthogonal()
+            iCurrentVector = (iCurrentVector.Orthogonal())*self.sizeOfCurrent
+            
+            """Define a radial vector from the center of the coil """
+            radiusVector = ROOT.TVector3(   self.currentElements[iPoint][0],
+                                            self.currentElements[iPoint][1],
+                                            self.currentElements[iPoint][2])
         
             """Update to reflect the current direction and size at a given point """
-            iCurrentVector = currentVectorFunction(iCurrentVector)
+            iCurrentVector = currentVectorFunction(iCurrentVector,radiusVector)
         
             """Calculate the current Vector at each point from the current vector function """
             self.currentElements[iPoint][3] = iCurrentVector.X()          

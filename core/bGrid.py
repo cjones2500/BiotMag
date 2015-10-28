@@ -26,11 +26,27 @@ class bGrid(object):
     def __str__(self):
         return  "Abstract Grid Object to add magnetic fields"
     
+    """Save a grid object to file"""
+    def saveGrid(self,fileToSave):
+        np.savetxt(fileToSave,self.cellsInGrid)
+    
+    """Read a grid object from a file """
+    def loadGrid(self,readFile):
+        self.cellsInGrid = np.loadtxt(readFile)
+        
+    """Add anothergrid object to this Grid object """
+    def addGrid(self,gridObject):
+        """TODO:    check the grid objects are the same size
+                    otherwise change them such that they are
+                    the same size """
+        self.cellsInGrid = self.cellsInGrid + gridObject.cellsInGrid
+        
+    
     """ add the field from a current object to the grid object """
     def addEffectiveBField(self,currentObject):
     
         """Loop through all the cells in the grid object"""
-        for iCell in range(0,len(self.cellsInGrid)):
+        for iCell in xrange(0,len(self.cellsInGrid)):
     
             """Initialise the sum of all the current elements for a given cell in the grid """
             vectorSumOfBFields = ROOT.TVector3(0.0,0.0,0.0)
@@ -65,7 +81,11 @@ class bGrid(object):
                 else:
                     multiplicationFactor = float(currentElementVector.Mag()*crossProductUnitVector.Mag()/(radialDistanceInCm*radialDistanceInCm))
     
-                """Calculate the total effect of different all the current sources on a particular cell"""
+                """ Calculate the total effect of different all the current sources on a particular cell.
+                    The 0.0000001 factor comes from the 10^-7 in Biot-Savart law from mu_0.
+                    Units are given in cm so an extra factor of 0.01*0.01 is added.
+                    FIXME: Not sure if there should be an extra factor of 0.01*0.01 here
+                """
                 vectorSumOfBFields = vectorSumOfBFields + 0.0000001*crossProductUnitVector*multiplicationFactor
 
             
@@ -108,8 +128,9 @@ class bGrid2D(bGrid):
         canvas.SaveAs(saveFileName)
         canvas.Update()
         raw_input("\nPress Enter to continue...")
-        
-    def PlotXProjection(self,yLineValue,saveFileName,yBandWidth=0.1):
+    
+    """Plot the projection on X of the magnetic field about a point in Y and in an x range """
+    def PlotXProjection(self,yLineValue,saveFileName,xLow,xHigh,yBandWidth=0.1):
         canvas = ROOT.TCanvas("canvas","Projection on X (set Y)",200,10,700,500);
         counter = 0
         
@@ -124,19 +145,23 @@ class bGrid2D(bGrid):
         counter = 0
         for iCell in range(0,self.numberOfCells):
             if( (self.cellsInGrid[iCell][1] + yBandWidth > yLineValue) and (self.cellsInGrid[iCell][1] - yBandWidth < yLineValue)  ):
-                xList[counter] = self.cellsInGrid[iCell][0]
-                bList[counter] = m.sqrt(    self.cellsInGrid[iCell][3]*self.cellsInGrid[iCell][3] +
-                                            self.cellsInGrid[iCell][4]*self.cellsInGrid[iCell][4] +
-                                            self.cellsInGrid[iCell][5]*self.cellsInGrid[iCell][5]   )
-                counter = counter + 1
+                
+                """Only look in the region where you are interested in the x dependence of the field """
+                if( ( self.cellsInGrid[iCell][0] > xLow) and  (self.cellsInGrid[iCell][0] < xHigh) ):
+                    xList[counter] = self.cellsInGrid[iCell][0]
+                    bList[counter] = m.sqrt(    self.cellsInGrid[iCell][3]*self.cellsInGrid[iCell][3] +
+                                                self.cellsInGrid[iCell][4]*self.cellsInGrid[iCell][4] +
+                                                self.cellsInGrid[iCell][5]*self.cellsInGrid[iCell][5]   )
+                    counter = counter + 1
         
         gr = ROOT.TGraph(len(xList),xList,bList)
         gr.SetTitle("Projection of X on the line Y = " + str(yLineValue))
+        gr.GetXaxis().SetRangeUser(xLow,xHigh)
         gr.GetXaxis().SetTitle("X position [cm]")
         gr.GetYaxis().SetTitle("B field Strength [T]")
         gr.GetXaxis().CenterTitle()
         gr.GetYaxis().CenterTitle()
-        gr.Draw("AC")
+        gr.Draw("AP*")
         canvas.SaveAs(saveFileName)
         canvas.Update()
         raw_input("\nPress Enter to continue...")
